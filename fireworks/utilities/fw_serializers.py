@@ -89,8 +89,11 @@ def recursive_dict(obj, preserve_unicode=True):
         return {recursive_dict(k, preserve_unicode): recursive_dict(v, preserve_unicode)
                 for k, v in obj.items()}
 
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, list):
         return [recursive_dict(v, preserve_unicode) for v in obj]
+
+    if isinstance(obj, tuple):
+        return tuple(recursive_dict(v, preserve_unicode) for v in obj)
 
     if isinstance(obj, int) or isinstance(obj, float):
         return obj
