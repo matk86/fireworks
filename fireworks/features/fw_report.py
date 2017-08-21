@@ -104,6 +104,49 @@ class FWReport:
                                    "count": total_count, "completed_score": completed_score})
         return decorated_list
 
+    def plot_stats(self, states=None, style='bar', **kwargs):
+        """
+        Makes a chart with the summary data
+
+        Args:
+            states ([str]): states to include in plot, defaults to 'COMPLETED' and 'FIZZLED',
+                note this also specifies the order of stacking
+            style (str): style of plot to generate, can either be 'bar' or 'fill'
+
+        Returns:
+            matplotlib plot module
+        """
+        results = self.get_stats(**kwargs)
+        state_to_color = {"RUNNING": "#F4B90B",
+                      "WAITING": "#1F62A2",
+                      "FIZZLED": "#DB0051",
+                      "READY": "#2E92F2",
+                      "COMPLETED": "#24C75A",
+                      "RESERVED": "#BB8BC1",
+                      "ARCHIVED": "#7F8287",
+                      "DEFUSED": "#B7BCC3",
+                      "PAUSED": "#FFCFCA"
+                      }
+        states = states or state_to_color.keys()
+
+        from matplotlib.figure import Figure
+        import numpy as np
+
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        data = {state: np.array([result['states'][state] for result in results])
+                for state in states}
+        
+        bottom = np.zeros(len(results))
+        for state in states:
+            if style is 'bar':
+                ax.bar(range(len(bottom)), data[state], bottom=bottom,
+                        color=state_to_color[state])
+            elif style is 'fill':
+                ax.fill_between(range(len(bottom)), bottom, data[state], color=state_to_color[state])
+            bottom += data[state]
+        return fig
+
     def get_stats_str(self, decorated_stat_list):
         """
         Convert the list of stats from FWReport.get_stats() to a string representation for viewing.

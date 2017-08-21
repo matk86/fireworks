@@ -2,10 +2,10 @@ import json
 import os
 from functools import wraps
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, make_response
 from flask import redirect, url_for, abort, flash, session
 from flask_paginate import Pagination
-from pymongo import DESCENDING, ASCENDING
+from pymongo import DESCENDING
 
 from fireworks import Firework
 from fireworks.features.fw_report import FWReport
@@ -370,6 +370,22 @@ def parse_querystr(querystr, coll):
               "to the database collection "
               "to make it run faster.".format(querystr))
     return d
+
+@app.route("/reports/<coll>/<interval>/<num_intervals>/fig.png")
+def simple(coll, interval, num_intervals):
+    import StringIO
+
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+    fwr = FWReport(lp)
+    fig = fwr.plot_stats(coll=coll, interval=interval, num_intervals=int(num_intervals))
+
+    canvas = FigureCanvas(fig)
+    png_output = StringIO.StringIO()
+    canvas.print_png(png_output)
+    response=make_response(png_output.getvalue())
+    response.headers['Content-Type'] = 'image/png'
+    return response
 
 
 if __name__ == "__main__":
