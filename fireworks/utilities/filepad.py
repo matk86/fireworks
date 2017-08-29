@@ -110,9 +110,8 @@ class FilePad(MSONable):
                      "original_file_path": path,
                      "metadata": metadata,
                      "compressed": compress}
-        with open(path, "r") as f:
-            contents = f.read()
-            return self._insert_contents(contents, identifier, root_data, compress)
+        with open(path, "rb") as f:
+            return self._insert_contents(f.read(), identifier, root_data, compress)
 
     def get_file(self, identifier):
         """
@@ -215,10 +214,10 @@ class FilePad(MSONable):
 
     def _insert_contents(self, contents, identifier, root_data, compress):
         """
-        Insert the file contents(string) to gridfs and store the file info doc in filepad
+        Insert the file contents(bytes) to gridfs and store the file info doc in filepad
 
         Args:
-            contents (str): file contents or any arbitrary string to be stored in gridfs
+            contents (bytes): file contents or any arbitrary string to be stored in gridfs
             identifier (str): file identifier
             compress (bool): compress or not
             root_data (dict): key:value pairs to be added to the document root
@@ -234,7 +233,7 @@ class FilePad(MSONable):
 
     def _insert_to_gridfs(self, contents, compress):
         if compress:
-            contents = zlib.compress(contents.encode(), compress)
+            contents = zlib.compress(contents, compress)
         # insert to gridfs
         return str(self.gridfs.put(contents))
 
@@ -244,7 +243,7 @@ class FilePad(MSONable):
             doc (dict)
 
         Returns:
-            (str, dict): the file content as a string, document dictionary
+            (bytes, dict): the file content as a string, document dictionary
         """
         from bson.objectid import ObjectId
 
@@ -271,7 +270,8 @@ class FilePad(MSONable):
             return None, None
         old_gfs_id = doc["gfs_id"]
         self.gridfs.delete(old_gfs_id)
-        gfs_id = self._insert_to_gridfs(open(path, "r").read(), compress)
+        with open(path, "rb") as f:
+            gfs_id = self._insert_to_gridfs(f.read(), compress)
         doc["gfs_id"] = gfs_id
         doc["compressed"] = compress
         return old_gfs_id, gfs_id
