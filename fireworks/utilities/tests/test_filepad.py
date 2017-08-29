@@ -15,18 +15,12 @@ class FilePadTest(unittest.TestCase):
     def setUp(self):
         self.chgcar_file = os.path.join(module_dir, "CHGCAR.Fe3O4")
         self.chgcar_file_gz = os.path.join(module_dir, "CHGCAR.Fe3O4.gz")
-        self.bin_file = os.path.join(module_dir, "some_file.bin")
         self.fp = FilePad.auto_load()
         self.identifier = "Fe3O4"
 
     def test_add_file(self):
         gfs_id, file_identifier = self.fp.add_file(self.chgcar_file, identifier=self.identifier)
         self.assertEqual(file_identifier, self.identifier)
-        self.assertIsNotNone(gfs_id)
-
-    def test_add_bin_file(self):
-        gfs_id, file_identifier = self.fp.add_file(self.bin_file, identifier="sf1")
-        self.assertEqual(file_identifier, "sf1")
         self.assertIsNotNone(gfs_id)
 
     def test_add_gz_file(self):
@@ -49,18 +43,6 @@ class FilePadTest(unittest.TestCase):
         self.assertEqual(doc["original_file_name"], os.path.basename(abspath))
         self.assertEqual(doc["original_file_path"], abspath)
         self.assertEqual(doc["compressed"], True)
-
-    def test_get_bin_file(self):
-        gfs_id, file_identifier = self.fp.add_file(self.bin_file, identifier="sf2", compress=False,
-                                                   metadata={"author": "Kiran Mathew"})
-        file_contents, doc = self.fp.get_file(file_identifier)
-        self.assertEqual(file_contents, open(self.bin_file, "rb").read())
-        self.assertEqual(doc["identifier"], file_identifier)
-        self.assertEqual(doc["metadata"]["author"], "Kiran Mathew")
-        abspath = os.path.abspath(self.bin_file)
-        self.assertEqual(doc["original_file_name"], os.path.basename(abspath))
-        self.assertEqual(doc["original_file_path"], abspath)
-        self.assertEqual(doc["compressed"], False)
 
     def test_get_gz_file(self):
         gfs_id, file_identifier = self.fp.add_file(self.chgcar_file_gz, identifier="chgz",
